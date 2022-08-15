@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Jonathan Mainguy <jon@soh.re>
+# (c) 2022, Jason Ernst <ernstjason1@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -17,10 +18,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -228,7 +225,7 @@ def main():
     copy = module.params['copy']
     deep_check = module.params['deep_check']
     file_args = module.load_file_common_arguments(module.params)
-    tempdir = os.path.dirname(__file__)
+    tempdir = "/tmp/"
     fdir, ffile = os.path.split(dest)
 
     # did tar file arrive?
@@ -240,20 +237,19 @@ def main():
             package = os.path.join(tempdir, str(src.rsplit('/', 1)[1]))
             try:
                 rsp, info = fetch_url(module, src)
-                f = open(package, 'w')
-                # Read 1kb at a time to save on ram
-                while True:
-                    data = rsp.read(BUFSIZE)
+                status_code = info["status"]
 
-                    if data == "":
-                        break  # End of file, break while loop
+                if status_code != 200:
+                    module.fail_json(msg="Failure downloading %s, %s" % (src, status_code))
 
-                    f.write(data)
+                f = open(package, 'wb')
+
+                f.write(rsp.read())
                 f.close()
                 src = package
             except Exception:
                 e = get_exception()
-                f.close()
+                # f.close()
                 module.fail_json(msg="Failure downloading %s, %s" % (src, e))
         else:
             module.fail_json(msg="Source '%s' does not exist" % src)
