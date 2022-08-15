@@ -21,7 +21,7 @@
 
 DOCUMENTATION = '''
 ---
-module: uncompress
+module: compscidr.uncompress
 version_added: 2.4
 short_description: Uncompresses an file after (optionally) copying it from the local machine.
 extends_documentation_fragment: files
