@@ -6,7 +6,7 @@ galaxy_info:
   author: Jason Ernst
   description: Enables uncompress of .gz and .bz2 files which aren't tarred
   company:
-  license:
+  license: GPLv3
   min_ansible_version: 2.4
   platforms:
     - name: Ubuntu
