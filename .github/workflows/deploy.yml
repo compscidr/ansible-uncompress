@@ -1,16 +1,29 @@
-name: Deploy to Ansible Galaxy
+---
+name: Galaxy-NG Roles Import
 
+# yamllint disable-line rule:truthy
 on:
-  push:
-    # Pattern matched against refs/tags
-    tags:        
-      - '**'           # Push events to every tag including hierarchical tags like v1.0/beta
+  release:
+    types: ['created']
 
 jobs:
-  release:
+  build:
+    name: Galaxy Role Importer
     runs-on: ubuntu-latest
+
     steps:
+<<<<<<< HEAD
+      - name: 'Checkout git repo'
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: 'Release on galaxy'
+        uses: ansible-actions/ansible-galaxy-action@v1.2.0
+=======
       - name: galaxy
         uses: robertdebock/galaxy-action@1.2.1
+>>>>>>> origin/main
         with:
           galaxy_api_key: ${{ secrets.galaxy_api_key }}
