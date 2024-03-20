@@ -15,14 +15,3 @@ jobs:
         cache: 'pip'
     - run: pip install ansible-core==2.12.1 ansible-lint==5.2.1 rich~=10.0.0 # https://github.com/ansible-community/ansible-lint/issues/1795
     - run: ansible-lint
-  release:
-    needs:
-      - test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: galaxy
-        uses: robertdebock/galaxy-action@1.2.0
-        with:
-          galaxy_api_key: ${{ secrets.galaxy_api_key }}
-          git_branch: main
