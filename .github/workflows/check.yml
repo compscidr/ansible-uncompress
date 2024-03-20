@@ -1,4 +1,4 @@
-name: Ansible Test and Release
+name: Test Ansible Workflow
 
 on: [push, pull_request]
 
