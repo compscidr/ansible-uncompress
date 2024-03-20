@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+<<<<<<< HEAD
       - name: 'Checkout git repo'
         uses: actions/checkout@v4
         with:
@@ -20,5 +21,9 @@ jobs:
 
       - name: 'Release on galaxy'
         uses: ansible-actions/ansible-galaxy-action@v1.2.0
+=======
+      - name: galaxy
+        uses: robertdebock/galaxy-action@1.2.1
+>>>>>>> origin/main
         with:
           galaxy_api_key: ${{ secrets.galaxy_api_key }}
