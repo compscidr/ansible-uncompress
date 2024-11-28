@@ -1,4 +1,8 @@
 # ansible-uncompress
+[![Static Badge](https://img.shields.io/badge/Ansible_galaxy-Download-blue)](https://galaxy.ansible.com/ui/standalone/roles/compscidr/uncompress/)
+[![ansible lint](https://github.com/compscidr/ansible-uncompress/actions/workflows/check.yml/badge.svg)](https://github.com/compscidr/ansible-uncompress/actions/workflows/check.yml)
+[![ansible lint rules](https://img.shields.io/badge/Ansible--lint-rules%20table-blue.svg)](https://ansible.readthedocs.io/projects/lint/rules/)
+
 Uncompress module for ansible. Lets you download an uncompress .gz and .bz2 files
 which currently isn't possible with the unarchive built-in module.
 https://galaxy.ansible.com/compscidr/uncompress
