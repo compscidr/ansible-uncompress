@@ -1,17 +1,17 @@
-name: Test Ansible Workflow
-
+name: ansible-lint
 on: [push, pull_request]
 
 jobs:
-  test:
+  build:
+    name: Ansible Lint # Naming the build is important to use it as a status check
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - run: touch requirements.txt
-    - name: Install Ansible
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.8"
-        cache: 'pip'
-    - run: pip install ansible-core==2.12.1 ansible-lint==5.2.1 rich~=10.0.0 # https://github.com/ansible-community/ansible-lint/issues/1795
-    - run: ansible-lint
+      - uses: actions/checkout@v4
+      - name: Run ansible-lint
+        uses: ansible/ansible-lint@main
+        # optional (see below):
+        with:
+          args: ""
+          setup_python: "true"
+          working_directory: ""
+          requirements_file: ""
