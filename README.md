@@ -17,12 +17,12 @@ file and then submitting to ansible galaxy so that it can be found and installed
 easily.
 
 ## installation via galaxy:
-`ansible-galaxy install compscidr.uncompress`
+`ansible-galaxy collection install compscidr.uncompress`
 
 ## installation via galaxy / requirements
 Add the following to `requirements.yml`
 ```
-roles:
+collections:
 - name: compscidr.uncompress
 ```
 Then run
@@ -31,27 +31,21 @@ Then run
 ## installation via git / requirements
 Add the following to your `requirements.yml` file:
 ```
-# from github
-- src: https://github.com/compscidr/ansible-uncompress
-  name: compscidr.uncompress
+collections:
+  - name: git+https://github.com/compscidr/ansible-uncompress.git,main
 ```
 Then run
 `ansible-galaxy install -r requirements.yml`
 
-## example use:
+## example use in task file:
 ```
 ---
-- name: Install some gz file:
-  hosts: all
-  roles:
-    - compscidr.uncompress
-  tasks:
-  - name: install cheat # https://github.com/cheat/cheat/blob/master/INSTALLING.md
-    tags: cheat
-    become: true
-    uncompress:
-      copy: no
-      src: https://github.com/cheat/cheat/releases/download/4.3.1/cheat-linux-amd64.gz
-      dest: /usr/local/bin/cheat
-      mode: '755'
+- name: install cheat # https://github.com/cheat/cheat/blob/master/INSTALLING.md
+  tags: cheat
+  become: true
+  uncompress:
+    copy: no
+    src: https://github.com/cheat/cheat/releases/download/4.3.1/cheat-linux-amd64.gz
+    dest: /usr/local/bin/cheat
+    mode: '755'
 ```
