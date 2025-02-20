@@ -5,8 +5,6 @@ readme: README.md
 authors:
   - Jason Ernst <ernstjason1@gmail.com>
 description: Enables uncompress of .gz and .bz2 files which aren't tarred
-license:
-  - GPL-3.0-or-later
 license_file: LICENSE
 tags:
   - tools
