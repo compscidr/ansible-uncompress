@@ -43,7 +43,7 @@ Then run
 - name: install cheat # https://github.com/cheat/cheat/blob/master/INSTALLING.md
   tags: cheat
   become: true
-  uncompress:
+  compscidr.uncompress:
     copy: no
     src: https://github.com/cheat/cheat/releases/download/4.3.1/cheat-linux-amd64.gz
     dest: /usr/local/bin/cheat
