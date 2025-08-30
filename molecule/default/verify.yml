@@ -1,0 +1,67 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Check if gzip uncompressed file exists and has content
+      ansible.builtin.stat:
+        path: /tmp/uncompress_test/uncompressed_gzip.txt
+      register: gzip_result
+
+    - name: Verify gzip file was uncompressed
+      ansible.builtin.assert:
+        that:
+          - gzip_result.stat.exists
+          - gzip_result.stat.size > 0
+        fail_msg: "Gzip file was not properly uncompressed"
+
+    - name: Check if bzip2 uncompressed file exists and has content
+      ansible.builtin.stat:
+        path: /tmp/uncompress_test/uncompressed_bzip2.txt
+      register: bzip2_result
+
+    - name: Verify bzip2 file was uncompressed
+      ansible.builtin.assert:
+        that:
+          - bzip2_result.stat.exists
+          - bzip2_result.stat.size > 0
+        fail_msg: "Bzip2 file was not properly uncompressed"
+
+    - name: Check if xz uncompressed file exists and has content
+      ansible.builtin.stat:
+        path: /tmp/uncompress_test/uncompressed_xz.txt
+      register: xz_result
+
+    - name: Verify xz file was uncompressed
+      ansible.builtin.assert:
+        that:
+          - xz_result.stat.exists
+          - xz_result.stat.size > 0
+        fail_msg: "XZ file was not properly uncompressed"
+
+    - name: Read and verify gzip content
+      ansible.builtin.slurp:
+        src: /tmp/uncompress_test/uncompressed_gzip.txt
+      register: gzip_content
+
+    - name: Read and verify bzip2 content
+      ansible.builtin.slurp:
+        src: /tmp/uncompress_test/uncompressed_bzip2.txt
+      register: bzip2_content
+
+    - name: Read and verify xz content
+      ansible.builtin.slurp:
+        src: /tmp/uncompress_test/uncompressed_xz.txt
+      register: xz_content
+
+    - name: Verify content was properly uncompressed
+      ansible.builtin.assert:
+        that:
+          - "'test file for' in (gzip_content.content | b64decode)"
+          - "'test file for' in (bzip2_content.content | b64decode)"
+          - "'test file for' in (xz_content.content | b64decode)"
+        fail_msg: "Uncompressed files do not contain expected content"
+
+    - name: Show test results
+      ansible.builtin.debug:
+        msg: "All uncompress tests passed successfully!"

@@ -1,0 +1,33 @@
+{
+ "collection_info": {
+  "namespace": "compscidr",
+  "name": "uncompress",
+  "version": "0.0.5",
+  "authors": [
+   "Jason Ernst <ernstjason1@gmail.com>"
+  ],
+  "readme": "README.md",
+  "tags": [
+   "tools",
+   "uncompress",
+   "gz",
+   "bz2"
+  ],
+  "description": "Enables uncompress of .gz and .bz2 files which aren't tarred",
+  "license": [],
+  "license_file": "LICENSE",
+  "dependencies": {},
+  "repository": "https://github.com/compscidr/ansible-uncompress",
+  "documentation": "https://github.com/compscidr/ansible-uncompress/README.md",
+  "homepage": "https://github.com/compscidr/ansible-uncompress",
+  "issues": "https://github.com/compscidr/ansible-uncompress/issues"
+ },
+ "file_manifest_file": {
+  "name": "FILES.json",
+  "ftype": "file",
+  "chksum_type": "sha256",
+  "chksum_sha256": "c4db1d3ebbe6336181d8dbbdcf9684216a0e9b4da798879f1f703b9473c6433c",
+  "format": 1
+ },
+ "format": 1
+}

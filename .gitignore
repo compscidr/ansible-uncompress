@@ -1,0 +1,10 @@
+# Collection build artifacts
+*.tar.gz
+
+# Molecule cache
+.molecule/
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
