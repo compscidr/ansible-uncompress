@@ -4,6 +4,9 @@
 # Molecule cache
 .molecule/
 
+# Ansible installation directory
+.ansible/
+
 # Python bytecode
 __pycache__/
 *.pyc
