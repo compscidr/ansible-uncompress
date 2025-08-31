@@ -41,19 +41,28 @@
         - xz
 
     - name: Compress test files with gzip
-      ansible.builtin.shell: gzip -c /tmp/uncompress_test/test_gzip.txt > /tmp/uncompress_test/test.gz
+      ansible.builtin.shell: >
+        gzip -c /tmp/uncompress_test/test_gzip.txt >
+        /tmp/uncompress_test/test.gz
       when: not (compressed_files.results[0].stat.exists | default(false))
-      changed_when: not (compressed_files.results[0].stat.exists | default(false))
+      changed_when: >
+        not (compressed_files.results[0].stat.exists | default(false))
 
     - name: Compress test files with bzip2
-      ansible.builtin.shell: bzip2 -c /tmp/uncompress_test/test_bzip2.txt > /tmp/uncompress_test/test.bz2
+      ansible.builtin.shell: >
+        bzip2 -c /tmp/uncompress_test/test_bzip2.txt >
+        /tmp/uncompress_test/test.bz2
       when: not (compressed_files.results[1].stat.exists | default(false))
-      changed_when: not (compressed_files.results[1].stat.exists | default(false))
+      changed_when: >
+        not (compressed_files.results[1].stat.exists | default(false))
 
     - name: Compress test files with xz
-      ansible.builtin.shell: xz -c /tmp/uncompress_test/test_xz.txt > /tmp/uncompress_test/test.xz
+      ansible.builtin.shell: >
+        xz -c /tmp/uncompress_test/test_xz.txt >
+        /tmp/uncompress_test/test.xz
       when: not (compressed_files.results[2].stat.exists | default(false))
-      changed_when: not (compressed_files.results[2].stat.exists | default(false))
+      changed_when: >
+        not (compressed_files.results[2].stat.exists | default(false))
 
     - name: Test uncompress gzip file
       compscidr.uncompress.uncompress:
