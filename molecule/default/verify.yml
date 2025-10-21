@@ -1,0 +1,44 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Check if cheat binary exists
+      ansible.builtin.stat:
+        path: /tmp/cheat
+      register: cheat_binary
+      failed_when: not cheat_binary.stat.exists
+
+    - name: Verify cheat binary is executable
+      ansible.builtin.stat:
+        path: /tmp/cheat
+      register: cheat_exec
+      failed_when: not cheat_exec.stat.executable
+
+    - name: Check if test-uncompressed.txt exists
+      ansible.builtin.stat:
+        path: /tmp/test-uncompressed.txt
+      register: test_gz
+      failed_when: not test_gz.stat.exists
+
+    - name: Verify test-uncompressed.txt content
+      ansible.builtin.command: cat /tmp/test-uncompressed.txt
+      register: gz_content
+      changed_when: false
+      failed_when: "'test content for gz' not in gz_content.stdout"
+
+    - name: Check if test2-uncompressed.txt exists
+      ansible.builtin.stat:
+        path: /tmp/test2-uncompressed.txt
+      register: test_bz2
+      failed_when: not test_bz2.stat.exists
+
+    - name: Verify test2-uncompressed.txt content
+      ansible.builtin.command: cat /tmp/test2-uncompressed.txt
+      register: bz2_content
+      changed_when: false
+      failed_when: "'test content for bz2' not in bz2_content.stdout"
+
+    - name: Display verification results
+      ansible.builtin.debug:
+        msg: "All uncompress operations verified successfully!"

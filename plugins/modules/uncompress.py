@@ -87,7 +87,6 @@ import bz2
 import filecmp
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.pycompat24 import get_exception
 
 
 # When downloading an archive, how much of the archive to download before
@@ -100,18 +99,11 @@ def ungzip(src, dest):
     Uncompress gzip files.
     """
     try:
-        f_out = open(dest, 'wb')
-        f_in = gzip.open(src, 'rb')
-        try:
-            shutil.copyfileobj(f_in, f_out)
-        finally:
-            f_out.close()
-            f_in.close()
+        with gzip.open(src, 'rb') as f_in:
+            with open(dest, 'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
         msg = ""
-    except Exception:
-        e = get_exception()
-        f_out.close()
-        f_in.close()
+    except Exception as e:
         msg = "%s" % e
 
     return msg
@@ -122,18 +114,11 @@ def unbzip(src, dest):
     Uncompress bzip files.
     """
     try:
-        f_out = open(dest, 'wb')
-        f_in = bz2.BZ2File(src, 'rb')
-        try:
-            shutil.copyfileobj(f_in, f_out)
-        finally:
-            f_out.close()
-            f_in.close()
+        with bz2.BZ2File(src, 'rb') as f_in:
+            with open(dest, 'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
         msg = ""
-    except Exception:
-        e = get_exception()
-        f_out.close()
-        f_in.close()
+    except Exception as e:
         msg = "%s" % e
 
     return msg
@@ -160,8 +145,7 @@ def unxzip(module, src, dest):
             module.fail_json(msg="%s should have uncompressed to %s, but alas it did not" % (src, ufile))
         shutil.move(ufile, dest)
         msg = ""
-    except Exception:
-        e = get_exception()
+    except Exception as e:
         msg = "%s" % e
 
     return msg
@@ -247,8 +231,7 @@ def main():
                 f.write(rsp.read())
                 f.close()
                 src = package
-            except Exception:
-                e = get_exception()
+            except Exception as e:
                 # f.close()
                 module.fail_json(msg="Failure downloading %s, %s" % (src, e))
         else:
@@ -293,8 +276,7 @@ def main():
     file_args['path'] = dest
     try:
         changed = module.set_fs_attributes_if_different(file_args, changed)
-    except (IOError, OSError):
-        e = get_exception()
+    except (IOError, OSError) as e:
         module.fail_json(msg="Unexpected error when accessing exploded file: %s" % str(e))
 
     module.exit_json(changed=changed)

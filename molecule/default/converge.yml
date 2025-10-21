@@ -1,0 +1,39 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  tasks:
+    - name: Test uncompress with .gz file (no copy)
+      compscidr.uncompress.uncompress:
+        copy: false
+        src: https://github.com/cheat/cheat/releases/download/4.3.1/cheat-linux-amd64.gz
+        dest: /tmp/cheat
+        mode: '755'
+
+    - name: Create a test .gz file
+      ansible.builtin.shell: |
+        echo "test content for gz" > /tmp/test.txt
+        gzip -f /tmp/test.txt
+      args:
+        creates: /tmp/test.txt.gz
+
+    - name: Test uncompress with local .gz file (with copy)
+      compscidr.uncompress.uncompress:
+        copy: true
+        src: /tmp/test.txt.gz
+        dest: /tmp/test-uncompressed.txt
+        mode: '644'
+
+    - name: Create a test .bz2 file
+      ansible.builtin.shell: |
+        echo "test content for bz2" > /tmp/test2.txt
+        bzip2 -f /tmp/test2.txt
+      args:
+        creates: /tmp/test2.txt.bz2
+
+    - name: Test uncompress with .bz2 file
+      compscidr.uncompress.uncompress:
+        copy: true
+        src: /tmp/test2.txt.bz2
+        dest: /tmp/test2-uncompressed.txt
+        mode: '644'
