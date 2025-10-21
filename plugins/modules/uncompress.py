@@ -99,17 +99,11 @@ def ungzip(src, dest):
     Uncompress gzip files.
     """
     try:
-        f_out = open(dest, 'wb')
-        f_in = gzip.open(src, 'rb')
-        try:
-            shutil.copyfileobj(f_in, f_out)
-        finally:
-            f_out.close()
-            f_in.close()
+        with gzip.open(src, 'rb') as f_in:
+            with open(dest, 'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
         msg = ""
     except Exception as e:
-        f_out.close()
-        f_in.close()
         msg = "%s" % e
 
     return msg
@@ -120,17 +114,11 @@ def unbzip(src, dest):
     Uncompress bzip files.
     """
     try:
-        f_out = open(dest, 'wb')
-        f_in = bz2.BZ2File(src, 'rb')
-        try:
-            shutil.copyfileobj(f_in, f_out)
-        finally:
-            f_out.close()
-            f_in.close()
+        with bz2.BZ2File(src, 'rb') as f_in:
+            with open(dest, 'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
         msg = ""
     except Exception as e:
-        f_out.close()
-        f_in.close()
         msg = "%s" % e
 
     return msg
