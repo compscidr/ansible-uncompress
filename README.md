@@ -38,7 +38,7 @@ Then run
 `ansible-galaxy install -r requirements.yml`
 
 ## example use in task file:
-```
+```yaml
 ---
 - name: install cheat # https://github.com/cheat/cheat/blob/master/INSTALLING.md
   tags: cheat
@@ -48,4 +48,97 @@ Then run
     src: https://github.com/cheat/cheat/releases/download/4.3.1/cheat-linux-amd64.gz
     dest: /usr/local/bin/cheat
     mode: '755'
+```
+
+## Development and Testing
+
+This collection uses [Molecule](https://molecule.readthedocs.io/) for testing with Docker containers across multiple Ubuntu versions (20.04, 22.04, and 24.04).
+
+### Prerequisites
+
+- Python 3.8 or later
+- Docker (running daemon)
+- Docker permissions for your user (or run tests as a user in the docker group)
+
+### Setting Up the Test Environment
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/compscidr/ansible-uncompress.git
+   cd ansible-uncompress
+   ```
+
+2. **Create and activate a Python virtual environment:**
+   ```bash
+   # On Linux/macOS
+   python3 -m venv venv
+   source venv/bin/activate
+
+   # On Windows
+   python -m venv venv
+   venv\Scripts\activate
+   ```
+
+3. **Install test dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Install required Ansible collections:**
+   ```bash
+   ansible-galaxy collection install community.docker
+   ```
+
+### Running Tests
+
+**Full test suite** (recommended for CI/CD):
+```bash
+molecule test
+```
+
+This runs the complete test sequence:
+- Syntax validation
+- Container creation
+- Dependency installation
+- Test playbook execution
+- Idempotence check
+- Verification tests
+- Cleanup and destruction
+
+**Development workflow** (faster iteration):
+```bash
+molecule create     # Create test containers
+molecule converge   # Run the test playbook
+molecule verify     # Run verification tests
+molecule destroy    # Clean up containers
+```
+
+**Test a specific platform:**
+```bash
+molecule test --platform-name ubuntu-22.04
+```
+
+Available platforms: `ubuntu-20.04`, `ubuntu-22.04`, `ubuntu-24.04`
+
+**Reset the test environment:**
+```bash
+molecule destroy    # Clean up existing containers
+molecule reset      # Clear configuration
+```
+
+### What the Tests Cover
+
+The molecule tests validate:
+- Downloading and uncompressing remote `.gz` files
+- Uncompressing local `.gz` files with `copy: true`
+- Uncompressing `.bz2` files
+- File permissions are set correctly
+- Decompressed file contents are valid
+- Operations are idempotent (running twice produces the same result)
+
+### Deactivating the Virtual Environment
+
+When done testing:
+```bash
+deactivate
 ```

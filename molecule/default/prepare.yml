@@ -1,0 +1,44 @@
+---
+- name: Prepare
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Build the collection
+      ansible.builtin.command:
+        cmd: ansible-galaxy collection build --output-path /tmp/ --force
+        chdir: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}"
+      changed_when: true
+
+    - name: Find the built collection
+      ansible.builtin.find:
+        paths: /tmp/
+        patterns: 'compscidr-uncompress-*.tar.gz'
+      register: collection_file
+
+    - name: Install the collection
+      ansible.builtin.command:
+        cmd: "ansible-galaxy collection install {{ collection_file.files[0].path }} --force"
+      changed_when: true
+      when: collection_file.files | length > 0
+
+    - name: Install community.docker collection
+      ansible.builtin.command:
+        cmd: ansible-galaxy collection install community.docker
+      changed_when: false
+
+- name: Prepare test containers
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Install required utilities
+      ansible.builtin.apt:
+        name:
+          - file
+          - gzip
+          - bzip2
+          - xz-utils
+          - curl
+        state: present
+        update_cache: true
