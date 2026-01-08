@@ -39,6 +39,8 @@ options:
   dest:
     description:
       - Remote absolute path where the file should be uncompressed.
+      - If dest is an existing directory, the uncompressed filename will be derived from the source filename with compression extension removed.
+      - If dest is a file path, it will be used as-is (existing behavior).
     required: true
     default: null
   copy:
@@ -63,12 +65,32 @@ notes:
 
 
 EXAMPLES = '''
+# Explicit file path as dest (traditional usage)
 - name: Uncompress foo.gz to /tmp/foo
   uncompress: src=foo.gz dest=/tmp/foo
+
 - name: Uncompress a file that is already on the remote machine
   uncompress: src=/tmp/foo.xz dest=/usr/local/bin/foo copy=no
+
 - name: Uncompress a file that needs to be downloaded
   uncompress: src=https://example.com/example.bz2 dest=/usr/local/bin/example copy=no
+
+# Directory as dest (filename auto-derived from source)
+- name: Uncompress to a directory (filename derived from source)
+  uncompress: src=foo.gz dest=/tmp/
+  # Results in /tmp/foo
+
+- name: Uncompress downloaded file to directory
+  uncompress: src=https://example.com/app.bz2 dest=/usr/local/bin/ copy=no
+  # Results in /usr/local/bin/app
+
+- name: Uncompress URL with query parameters to directory
+  uncompress: src=https://example.com/download/file.gz?version=1.0&token=abc dest=/opt/myapp/ copy=no
+  # Query parameters are stripped - results in /opt/myapp/file
+
+- name: Uncompress tar.gz to directory (strips .gz, keeps .tar)
+  uncompress: src=archive.tar.gz dest=/tmp/
+  # Results in /tmp/archive.tar
 '''
 
 
@@ -97,6 +119,41 @@ from ansible.module_utils.urls import fetch_url
 # When downloading an archive, how much of the archive to download before
 # saving to a tempfile (64k)
 BUFSIZE = 65536
+
+
+def derive_uncompressed_filename(src):
+    """
+    Derive the uncompressed filename from a source path or URL.
+    Strips compression extensions: .gz, .bz2, .xz, .lzma
+    Replaces .txz/.tlz with .tar
+    """
+    # Extract filename from URL or path
+    if '://' in src:
+        # URL: extract path portion and get filename
+        path_part = src.split('://', 1)[1]
+        filename = path_part.rsplit('/', 1)[-1]
+        # Strip query parameters
+        filename = filename.split('?', 1)[0]
+    else:
+        # Local path: get basename
+        filename = os.path.basename(src)
+
+    # Strip compression extensions
+    if filename.endswith('.gz'):
+        return filename[:-3]
+    elif filename.endswith('.bz2'):
+        return filename[:-4]
+    elif filename.endswith('.xz'):
+        return filename[:-3]
+    elif filename.endswith('.lzma'):
+        return filename[:-5]
+    elif filename.endswith('.txz'):
+        return filename[:-4] + '.tar'
+    elif filename.endswith('.tlz'):
+        return filename[:-4] + '.tar'
+    else:
+        # No recognized compression extension, return as-is
+        return filename
 
 
 def ungzip(src, dest):
@@ -215,6 +272,12 @@ def main():
     deep_check = module.params['deep_check']
     file_args = module.load_file_common_arguments(module.params)
     tempdir = "/tmp/"
+
+    # If dest is an existing directory, derive the filename from src
+    if os.path.isdir(dest):
+        derived_filename = derive_uncompressed_filename(src)
+        dest = os.path.join(dest, derived_filename)
+
     fdir, ffile = os.path.split(dest)
 
     # did tar file arrive?
@@ -255,9 +318,6 @@ def main():
 
     if not os.access(src, os.R_OK):
         module.fail_json(msg="Source '%s' not readable" % src)
-
-    if os.path.isdir(dest):
-        module.fail_json(msg="Destination '%s' is an existing directory, must be a file, consider using unarchive module for archives" % dest)
 
     # Full path to the uncompressed file in the temp directory.
     tempsrc = os.path.join(tempdir, ffile)
