@@ -197,7 +197,7 @@ If you need to decompress first and extract later (e.g., to inspect the tar file
 
 ## Development and Testing
 
-This collection uses [Molecule](https://molecule.readthedocs.io/) for testing with Docker containers across multiple Ubuntu versions (20.04, 22.04, and 24.04).
+This collection uses [Molecule](https://molecule.readthedocs.io/) for testing with Docker containers across multiple Ubuntu versions (22.04 and 24.04).
 
 ### Prerequisites
 
@@ -263,7 +263,7 @@ molecule destroy    # Clean up containers
 molecule test --platform-name ubuntu-22.04
 ```
 
-Available platforms: `ubuntu-20.04`, `ubuntu-22.04`, `ubuntu-24.04`
+Available platforms: `ubuntu-22.04`, `ubuntu-24.04`
 
 **Reset the test environment:**
 ```bash
