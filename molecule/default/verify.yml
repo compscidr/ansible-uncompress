@@ -29,6 +29,46 @@
             mode: '644'
           register: result_bz2
 
+        - name: Test uncompress with .gz file to directory
+          compscidr.uncompress.uncompress:
+            copy: true
+            src: /tmp/test3.txt.gz
+            dest: /tmp/uncompress-test-dir/
+            mode: '644'
+          register: result_gz_dir
+
+        - name: Test uncompress with .bz2 file to directory
+          compscidr.uncompress.uncompress:
+            copy: true
+            src: /tmp/test4.txt.bz2
+            dest: /tmp/uncompress-test-dir/
+            mode: '644'
+          register: result_bz2_dir
+
+        - name: Test uncompress with .tar.gz file to directory
+          compscidr.uncompress.uncompress:
+            copy: true
+            src: /tmp/test5.tar.gz
+            dest: /tmp/uncompress-test-dir/
+            mode: '644'
+          register: result_tar_gz_dir
+
+        - name: Test uncompress with .txz file to directory
+          compscidr.uncompress.uncompress:
+            copy: true
+            src: /tmp/test6.txz
+            dest: /tmp/uncompress-test-dir/
+            mode: '644'
+          register: result_txz_dir
+
+        - name: Test uncompress with URL containing query parameters
+          compscidr.uncompress.uncompress:
+            copy: false
+            src: https://github.com/cheat/cheat/releases/download/4.3.1/cheat-linux-amd64.gz?test=1&dummy=param
+            dest: /tmp/uncompress-test-dir/
+            mode: '755'
+          register: result_url_query
+
     - name: Verify dest is returned correctly for cheat
       ansible.builtin.assert:
         that:
@@ -88,6 +128,94 @@
       register: bz2_content
       changed_when: false
       failed_when: "'test content for bz2' not in bz2_content.stdout"
+
+    - name: Verify dest is returned correctly for gz file to directory
+      ansible.builtin.assert:
+        that:
+          - result_gz_dir.dest is defined
+          - result_gz_dir.dest == "/tmp/uncompress-test-dir/test3.txt"
+        fail_msg: "dest return value not correct for gz directory test"
+        success_msg: "dest return value correct for gz directory test"
+
+    - name: Verify dest is returned correctly for bz2 file to directory
+      ansible.builtin.assert:
+        that:
+          - result_bz2_dir.dest is defined
+          - result_bz2_dir.dest == "/tmp/uncompress-test-dir/test4.txt"
+        fail_msg: "dest return value not correct for bz2 directory test"
+        success_msg: "dest return value correct for bz2 directory test"
+
+    - name: Verify dest is returned correctly for tar.gz file to directory
+      ansible.builtin.assert:
+        that:
+          - result_tar_gz_dir.dest is defined
+          - result_tar_gz_dir.dest == "/tmp/uncompress-test-dir/test5.tar"
+        fail_msg: "dest return value not correct for tar.gz directory test (should be .tar)"
+        success_msg: "dest return value correct for tar.gz directory test"
+
+    - name: Verify dest is returned correctly for txz file to directory
+      ansible.builtin.assert:
+        that:
+          - result_txz_dir.dest is defined
+          - result_txz_dir.dest == "/tmp/uncompress-test-dir/test6.tar"
+        fail_msg: "dest return value not correct for txz directory test (should be .tar)"
+        success_msg: "dest return value correct for txz directory test"
+
+    - name: Verify dest is returned correctly for URL with query parameters
+      ansible.builtin.assert:
+        that:
+          - result_url_query.dest is defined
+          - result_url_query.dest == "/tmp/uncompress-test-dir/cheat-linux-amd64"
+        fail_msg: "dest return value not correct for URL with query params (query params should be stripped)"
+        success_msg: "dest return value correct for URL with query params"
+
+    - name: Check if test3.txt exists in directory
+      ansible.builtin.stat:
+        path: /tmp/uncompress-test-dir/test3.txt
+      register: test3_file
+      failed_when: not test3_file.stat.exists
+
+    - name: Verify test3.txt content
+      ansible.builtin.command: cat /tmp/uncompress-test-dir/test3.txt
+      register: test3_content
+      changed_when: false
+      failed_when: "'test content for gz directory' not in test3_content.stdout"
+
+    - name: Check if test4.txt exists in directory
+      ansible.builtin.stat:
+        path: /tmp/uncompress-test-dir/test4.txt
+      register: test4_file
+      failed_when: not test4_file.stat.exists
+
+    - name: Verify test4.txt content
+      ansible.builtin.command: cat /tmp/uncompress-test-dir/test4.txt
+      register: test4_content
+      changed_when: false
+      failed_when: "'test content for bz2 directory' not in test4_content.stdout"
+
+    - name: Check if test5.tar exists in directory (stripped from .tar.gz)
+      ansible.builtin.stat:
+        path: /tmp/uncompress-test-dir/test5.tar
+      register: test5_file
+      failed_when: not test5_file.stat.exists
+
+    - name: Check if test6.tar exists in directory (stripped from .txz)
+      ansible.builtin.stat:
+        path: /tmp/uncompress-test-dir/test6.tar
+      register: test6_file
+      failed_when: not test6_file.stat.exists
+
+    - name: Check if cheat-linux-amd64 exists (from URL with query params)
+      ansible.builtin.stat:
+        path: /tmp/uncompress-test-dir/cheat-linux-amd64
+      register: url_query_file
+      failed_when: not url_query_file.stat.exists
+
+    - name: Verify cheat-linux-amd64 is executable (from URL with query params)
+      ansible.builtin.stat:
+        path: /tmp/uncompress-test-dir/cheat-linux-amd64
+      register: url_query_exec
+      failed_when: not url_query_exec.stat.executable
 
     - name: Display verification results
       ansible.builtin.debug:
