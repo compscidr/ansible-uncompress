@@ -40,7 +40,7 @@ options:
     description:
       - Remote absolute path where the file should be uncompressed.
       - If dest is an existing directory, the uncompressed filename will be derived from the source filename with compression extension removed.
-      - If dest is a file path, it will be used as-is (existing behavior).
+      - If dest is a file path (or does not exist), it will be treated as the full file path including filename.
     required: true
     default: null
   copy:
@@ -128,7 +128,8 @@ def derive_uncompressed_filename(src):
     Replaces .txz/.tlz with .tar
     """
     # Extract filename from URL or path
-    if '://' in src:
+    # Check for common URL schemes to avoid false positives with Windows paths like C:/path/file.gz
+    if '://' in src and any(src.startswith(scheme + '://') for scheme in ['http', 'https', 'ftp', 'ftps', 'file']):
         # URL: extract path portion and get filename
         path_part = src.split('://', 1)[1]
         filename = path_part.rsplit('/', 1)[-1]

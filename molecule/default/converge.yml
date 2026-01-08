@@ -91,3 +91,30 @@
         dest: /tmp/uncompress-test-dir/
         mode: '644'
       register: result_tar_gz_dir
+
+    - name: Create a test .xz file for .txz extension test
+      ansible.builtin.shell: |
+        echo "test content for txz" > /tmp/test6.txt
+        tar -cf /tmp/test6.tar test6.txt
+        xz -f /tmp/test6.tar
+        mv /tmp/test6.tar.xz /tmp/test6.txz
+      args:
+        creates: /tmp/test6.txz
+        chdir: /tmp
+
+    - name: Test uncompress with .txz file to directory (should result in .tar)
+      compscidr.uncompress.uncompress:
+        copy: true
+        src: /tmp/test6.txz
+        dest: /tmp/uncompress-test-dir/
+        mode: '644'
+      register: result_txz_dir
+
+    - name: Test uncompress with URL containing query parameters
+      compscidr.uncompress.uncompress:
+        copy: false
+        src: https://github.com/cheat/cheat/releases/download/4.3.1/cheat-linux-amd64.gz?test=1&dummy=param
+        dest: /tmp/uncompress-test-dir/
+        mode: '755'
+      register: result_url_query
+      # GitHub ignores query parameters, so this should work and result in /tmp/uncompress-test-dir/cheat-linux-amd64
