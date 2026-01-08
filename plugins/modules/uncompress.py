@@ -78,6 +78,11 @@ changed:
     returned: always
     type: boolean
     sample: True
+dest:
+    description: Destination file path of the uncompressed file
+    returned: always
+    type: string
+    sample: /tmp/foo
 '''
 
 import os
@@ -279,7 +284,7 @@ def main():
     except (IOError, OSError) as e:
         module.fail_json(msg="Unexpected error when accessing exploded file: %s" % str(e))
 
-    module.exit_json(changed=changed)
+    module.exit_json(changed=changed, dest=dest)
 
 if __name__ == '__main__':
     main()

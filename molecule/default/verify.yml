@@ -3,6 +3,56 @@
   hosts: all
   gather_facts: false
   tasks:
+    - name: Re-run uncompress tasks to get return values
+      block:
+        - name: Test uncompress with .gz file (no copy)
+          compscidr.uncompress.uncompress:
+            copy: false
+            src: https://github.com/cheat/cheat/releases/download/4.3.1/cheat-linux-amd64.gz
+            dest: /tmp/cheat
+            mode: '755'
+          register: result_cheat
+
+        - name: Test uncompress with local .gz file (with copy)
+          compscidr.uncompress.uncompress:
+            copy: true
+            src: /tmp/test.txt.gz
+            dest: /tmp/test-uncompressed.txt
+            mode: '644'
+          register: result_gz
+
+        - name: Test uncompress with .bz2 file
+          compscidr.uncompress.uncompress:
+            copy: true
+            src: /tmp/test2.txt.bz2
+            dest: /tmp/test2-uncompressed.txt
+            mode: '644'
+          register: result_bz2
+
+    - name: Verify dest is returned correctly for cheat
+      ansible.builtin.assert:
+        that:
+          - result_cheat.dest is defined
+          - result_cheat.dest == "/tmp/cheat"
+        fail_msg: "dest return value not correct for cheat"
+        success_msg: "dest return value correct for cheat"
+
+    - name: Verify dest is returned correctly for gz file
+      ansible.builtin.assert:
+        that:
+          - result_gz.dest is defined
+          - result_gz.dest == "/tmp/test-uncompressed.txt"
+        fail_msg: "dest return value not correct for gz file"
+        success_msg: "dest return value correct for gz file"
+
+    - name: Verify dest is returned correctly for bz2 file
+      ansible.builtin.assert:
+        that:
+          - result_bz2.dest is defined
+          - result_bz2.dest == "/tmp/test2-uncompressed.txt"
+        fail_msg: "dest return value not correct for bz2 file"
+        success_msg: "dest return value correct for bz2 file"
+
     - name: Check if cheat binary exists
       ansible.builtin.stat:
         path: /tmp/cheat
