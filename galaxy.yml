@@ -1,6 +1,6 @@
 namespace: compscidr
 name: uncompress
-version: 0.0.6
+version: 0.0.7
 readme: README.md
 authors:
   - Jason Ernst <ernstjason1@gmail.com>

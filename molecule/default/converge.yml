@@ -9,6 +9,7 @@
         src: https://github.com/cheat/cheat/releases/download/4.3.1/cheat-linux-amd64.gz
         dest: /tmp/cheat
         mode: '755'
+      register: result_cheat
 
     - name: Create a test .gz file
       ansible.builtin.shell: |
@@ -23,6 +24,7 @@
         src: /tmp/test.txt.gz
         dest: /tmp/test-uncompressed.txt
         mode: '644'
+      register: result_gz
 
     - name: Create a test .bz2 file
       ansible.builtin.shell: |
@@ -37,3 +39,4 @@
         src: /tmp/test2.txt.bz2
         dest: /tmp/test2-uncompressed.txt
         mode: '644'
+      register: result_bz2
