@@ -118,3 +118,28 @@
         mode: '755'
       register: result_url_query
       # GitHub ignores query parameters, so this should work and result in /tmp/uncompress-test-dir/cheat-linux-amd64
+
+    - name: Create a compressed file with no compression extension (for overwrite test)
+      ansible.builtin.shell: |
+        echo "test content for overwrite check" > /tmp/overwrite-test.txt
+        gzip -f /tmp/overwrite-test.txt
+        mv /tmp/overwrite-test.txt.gz /tmp/overwrite-test
+      args:
+        creates: /tmp/overwrite-test
+
+    - name: Test that uncompressing a file with no extension into same directory fails
+      compscidr.uncompress.uncompress:
+        copy: false
+        src: /tmp/overwrite-test
+        dest: /tmp/
+        mode: '644'
+      register: result_overwrite
+      ignore_errors: true
+
+    - name: Verify overwrite protection triggered
+      ansible.builtin.assert:
+        that:
+          - result_overwrite is failed
+          - "'resolve to the same file' in result_overwrite.msg"
+        fail_msg: "Overwrite protection did not trigger when src and dest resolve to the same file"
+        success_msg: "Overwrite protection correctly prevented source file from being overwritten"

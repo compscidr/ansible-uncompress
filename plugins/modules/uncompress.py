@@ -320,6 +320,13 @@ def main():
     if not os.access(src, os.R_OK):
         module.fail_json(msg="Source '%s' not readable" % src)
 
+    # Check if dest would overwrite src (e.g. when src has no compression extension and dest is the same directory)
+    # This check must run after src is finalized (after any URL download rewrites src to a local temp file)
+    if os.path.realpath(src) == os.path.realpath(dest):
+        module.fail_json(msg="Source '%s' and destination '%s' resolve to the same file. "
+                         "This would overwrite the compressed source file. "
+                         "Use an explicit dest filename or rename the source to include a compression extension." % (src, dest))
+
     # Full path to the uncompressed file in the temp directory.
     tempsrc = os.path.join(tempdir, ffile)
 
