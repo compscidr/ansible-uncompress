@@ -279,6 +279,12 @@ def main():
         derived_filename = derive_uncompressed_filename(src)
         dest = os.path.join(dest, derived_filename)
 
+    # Check if dest would overwrite src (e.g. when src has no compression extension and dest is the same directory)
+    if os.path.realpath(src) == os.path.realpath(dest):
+        module.fail_json(msg="Source '%s' and destination '%s' resolve to the same file. "
+                         "This would overwrite the compressed source file. "
+                         "Use an explicit dest filename or rename the source to include a compression extension." % (src, dest))
+
     fdir, ffile = os.path.split(dest)
 
     # did tar file arrive?
