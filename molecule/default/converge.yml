@@ -143,3 +143,107 @@
           - "'resolve to the same file' in result_overwrite.msg"
         fail_msg: "Overwrite protection did not trigger when src and dest resolve to the same file"
         success_msg: "Overwrite protection correctly prevented source file from being overwritten"
+
+    # Regression test for https://github.com/compscidr/ansible-uncompress/issues/28
+    - name: Create an .xz file to uncompress into its own directory
+      ansible.builtin.shell: |
+        rm -rf /tmp/xz-same-dir
+        mkdir -p /tmp/xz-same-dir
+        echo foo > /tmp/xz-same-dir/foo
+        echo bar > /tmp/xz-same-dir/bar
+        xz /tmp/xz-same-dir/foo /tmp/xz-same-dir/bar
+      changed_when: true
+      tags: molecule-idempotence-notest
+
+    - name: Uncompress .xz into the same directory (first run)
+      compscidr.uncompress.uncompress:
+        copy: false
+        src: /tmp/xz-same-dir/foo.xz
+        dest: /tmp/xz-same-dir/
+      register: xz_first
+      tags: molecule-idempotence-notest
+
+    - name: Uncompress .xz into the same directory again (nothing changed)
+      compscidr.uncompress.uncompress:
+        copy: false
+        src: /tmp/xz-same-dir/foo.xz
+        dest: /tmp/xz-same-dir/
+      register: xz_second
+      tags: molecule-idempotence-notest
+
+    - name: Replace the source with different content of the same size
+      ansible.builtin.command: mv /tmp/xz-same-dir/bar.xz /tmp/xz-same-dir/foo.xz
+      changed_when: true
+      tags: molecule-idempotence-notest
+
+    - name: Uncompress the replaced .xz into the same directory
+      compscidr.uncompress.uncompress:
+        copy: false
+        src: /tmp/xz-same-dir/foo.xz
+        dest: /tmp/xz-same-dir/
+      register: xz_third
+      tags: molecule-idempotence-notest
+
+    - name: Read the uncompressed file
+      ansible.builtin.slurp:
+        src: /tmp/xz-same-dir/foo
+      register: xz_content
+      tags: molecule-idempotence-notest
+
+    - name: Verify xz idempotency and content updates
+      ansible.builtin.assert:
+        that:
+          - xz_first is changed
+          - xz_second is not changed
+          - xz_third is changed
+          - xz_content.content | b64decode | trim == 'bar'
+        fail_msg: >-
+          xz same-directory uncompress misbehaved:
+          first={{ xz_first.changed }} second={{ xz_second.changed }}
+          third={{ xz_third.changed }} content={{ xz_content.content | b64decode | trim }}
+        success_msg: "xz same-directory uncompress is idempotent and updates content"
+      tags: molecule-idempotence-notest
+
+    - name: Create a legacy .lzma file
+      ansible.builtin.shell: |
+        echo "test content for lzma" > /tmp/test7.txt
+        xz --format=lzma -f /tmp/test7.txt
+      args:
+        creates: /tmp/test7.txt.lzma
+
+    - name: Test uncompress with legacy .lzma file to directory
+      compscidr.uncompress.uncompress:
+        copy: true
+        src: /tmp/test7.txt.lzma
+        dest: /tmp/uncompress-test-dir/
+        mode: '644'
+      register: result_lzma_dir
+
+    - name: Read the uncompressed .lzma output
+      ansible.builtin.slurp:
+        src: /tmp/uncompress-test-dir/test7.txt
+      register: lzma_content
+
+    - name: Verify legacy .lzma was uncompressed
+      ansible.builtin.assert:
+        that:
+          - lzma_content.content | b64decode | trim == 'test content for lzma'
+        fail_msg: "legacy .lzma file was not uncompressed correctly"
+        success_msg: "legacy .lzma file uncompressed correctly"
+
+    # Regression test for https://github.com/compscidr/ansible-uncompress/issues/29
+    - name: Look for leftover module temp directories
+      ansible.builtin.find:
+        paths:
+          - /tmp
+          - /root/.ansible/tmp
+        patterns: 'ansible-moduletmp-*'
+        file_type: directory
+      register: leftover_tmp
+
+    - name: Verify temp files were cleaned up
+      ansible.builtin.assert:
+        that:
+          - leftover_tmp.matched == 0
+        fail_msg: "uncompress left temp director(ies) behind: {{ leftover_tmp.files | map(attribute='path') | list }}"
+        success_msg: "No module temp directories left behind"
