@@ -206,14 +206,17 @@
 
     # Regression test for https://github.com/compscidr/ansible-uncompress/issues/29
     - name: Look for leftover module temp directories
-      ansible.builtin.shell: >-
-        find /tmp /root/.ansible/tmp -maxdepth 1 -name 'ansible-moduletmp-*' 2>/dev/null | wc -l
+      ansible.builtin.find:
+        paths:
+          - /tmp
+          - /root/.ansible/tmp
+        patterns: 'ansible-moduletmp-*'
+        file_type: directory
       register: leftover_tmp
-      changed_when: false
 
     - name: Verify temp files were cleaned up
       ansible.builtin.assert:
         that:
-          - leftover_tmp.stdout | int == 0
-        fail_msg: "uncompress left {{ leftover_tmp.stdout }} temp director(ies) behind"
+          - leftover_tmp.matched == 0
+        fail_msg: "uncompress left temp director(ies) behind: {{ leftover_tmp.files | map(attribute='path') | list }}"
         success_msg: "No module temp directories left behind"
