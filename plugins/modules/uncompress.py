@@ -51,14 +51,13 @@ options:
     default: "yes"
   deep_check:
     description:
-      - "If true, and dest already exists, the file performs a longer and more extensive test than just filesize before deciding to overwrite or not"
+      - "Deprecated and ignored. File contents are now always compared before overwriting dest."
     required: false
     choices: [ "yes", "no" ]
     default: "no"
 author: "Jonathan Mainguy (@Jmainguy)"
 notes:
-    - requires C(file)/C(xz) commands on target host
-    - requires gzip and bzip python modules
+    - requires the C(file) command on target host
     - can handle I(gzip), I(bzip2) and I(xz) compressed files
     - detects type of compressed file automatically
 '''
@@ -111,6 +110,7 @@ import os
 import shutil
 import gzip
 import bz2
+import lzma
 import filecmp
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
@@ -187,26 +187,14 @@ def unbzip(src, dest):
     return msg
 
 
-def unxzip(module, src, dest):
+def unxzip(src, dest):
     """
-    Uncompress xz files. Since we must support python 2.4 (EL 5) we cannot import lzma and use native python.
-    We guess the filename of the output. .xz and .lzma get stripped, .txz and .lzma get replaced with .tar
+    Uncompress xz/lzma files.
     """
-    cmd_path = module.get_bin_path('xz')
-    cmd = '%s -k -d %s' % (cmd_path, src)
-    # Guess filename of output
-    prefix, suffix = os.path.splitext(src)
-    if (suffix == '.xz') or (suffix == '.lzma'):
-        ufile = prefix
-    elif (suffix == '.txz') or (suffix == '.tlz'):
-        ufile = prefix + '.tar'
-    else:
-        module.fail_json(msg="xz does not understand suffix %s" % suffix)
     try:
-        module.run_command(cmd)
-        if not os.path.isfile(ufile):
-            module.fail_json(msg="%s should have uncompressed to %s, but alas it did not" % (src, ufile))
-        shutil.move(ufile, dest)
+        with lzma.open(src, 'rb') as f_in:
+            with open(dest, 'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
         msg = ""
     except Exception as e:
         msg = "%s" % e
@@ -225,33 +213,19 @@ def filetype(module, src):
     return ftype
 
 
-def copyfile(src, dest, deep_check):
+def copyfile(module, src, dest, deep_check):
     """
-    Copy file from tempsrc to final destination. Unless its already at dest, and the same as tempsrc.
-    """
-    changed = False
-    if os.path.isfile(dest):
-        # This takes a long time
-        if deep_check:
-            nodiff = filecmp.cmp(src, dest, shallow=True)
-        # This is much quicker
-        else:
-            destsize = os.path.getsize(dest)
-            srcsize = os.path.getsize(src)
-            if destsize != srcsize:
-                nodiff = False
-            else:
-                nodiff = True
-        # If there is a difference, then we change the destination
-        if nodiff is False:
-            shutil.move(src, dest)
-            changed = True
-    # If the destination file does not exist, then place it.
-    else:
-        shutil.move(src, dest)
-        changed = True
+    Move the uncompressed file from tempsrc to its final destination, unless dest already
+    exists and is identical.
 
-    return changed
+    deep_check is accepted for backwards compatibility but no longer has any effect: contents are
+    always compared, since a size-only comparison silently skipped same-size, different-content files.
+    """
+    if os.path.isfile(dest) and filecmp.cmp(src, dest, shallow=False):
+        return False
+
+    module.atomic_move(src, dest)
+    return True
 
 
 def main():
@@ -272,7 +246,8 @@ def main():
     copy = module.params['copy']
     deep_check = module.params['deep_check']
     file_args = module.load_file_common_arguments(module.params)
-    tempdir = "/tmp/"
+    # Per-invocation directory, created 0700 with a random name and removed at exit.
+    tempdir = module.tmpdir
 
     # If dest is an existing directory, derive the filename from src
     if os.path.isdir(dest):
@@ -287,7 +262,8 @@ def main():
             module.fail_json(msg="Source '%s' failed to transfer" % src)
         # If copy=false, and src= contains ://, try and download the file to a temp directory.
         elif '://' in src:
-            package = os.path.join(tempdir, str(src.rsplit('/', 1)[1]))
+            # 'src-' prefix so a downloaded file can never collide with tempsrc below
+            package = os.path.join(tempdir, 'src-' + str(src.rsplit('/', 1)[1]))
             try:
                 rsp, info = fetch_url(module, src)
                 status_code = info["status"]
@@ -327,7 +303,7 @@ def main():
                          "This would overwrite the compressed source file. "
                          "Use an explicit dest filename or rename the source to include a compression extension." % (src, dest))
 
-    # Full path to the uncompressed file in the temp directory.
+    # Full path to the uncompressed file in the per-invocation temp directory.
     tempsrc = os.path.join(tempdir, ffile)
 
     # Check what kind of compressed file the src is.
@@ -337,13 +313,13 @@ def main():
     elif "x-bzip2" in ftype:
         msg = unbzip(src, tempsrc)
     elif "x-xz" in ftype:
-        msg = unxzip(module, src, tempsrc)
+        msg = unxzip(src, tempsrc)
     else:
         module.fail_json(msg="Filetype not supported by uncompress module. %s" % ftype)
     if msg != "":
         module.fail_json(msg=msg)
     # If file already exists at dest, compare uncompressed file and dest, and replace if different.
-    changed = copyfile(tempsrc, dest, deep_check)
+    changed = copyfile(module, tempsrc, dest, deep_check)
 
     # do we need to change perms?
     file_args['path'] = dest
