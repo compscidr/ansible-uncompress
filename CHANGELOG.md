@@ -5,6 +5,7 @@
 - Destination comparison now always compares file contents; a same-size but different-content file is no longer treated as unchanged. `deep_check` is accepted but ignored
 - Temporary files now live in a per-invocation directory created with a random name and mode 0700, and are removed when the module exits (#29)
 - The uncompressed file is now put in place with `atomic_move`
+- Legacy `.lzma` files (reported by `file` as `application/x-lzma`) are now recognized; previously they failed with an unsupported filetype error despite the documented lzma support
 
 ## 0.0.9 (2026-03-10)
 - Fixed a bug where uncompressing a file with no recognized compression extension into the same directory would silently overwrite the source file (#22)

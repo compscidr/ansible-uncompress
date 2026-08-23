@@ -312,7 +312,7 @@ def main():
         msg = ungzip(src, tempsrc)
     elif "x-bzip2" in ftype:
         msg = unbzip(src, tempsrc)
-    elif "x-xz" in ftype:
+    elif "x-xz" in ftype or "x-lzma" in ftype:
         msg = unxzip(src, tempsrc)
     else:
         module.fail_json(msg="Filetype not supported by uncompress module. %s" % ftype)
