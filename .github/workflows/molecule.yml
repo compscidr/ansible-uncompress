@@ -23,7 +23,7 @@ jobs:
         uses: actions/setup-python@v7
         with:
           # Pinned to 3.14 explicitly works with ansible-core>=2.20,<2.21 so you may need to bump requirements.txt if changing this
-          python-version: '3.14'
+          python-version: '3.15'
 
       - name: Install dependencies
         run: |
